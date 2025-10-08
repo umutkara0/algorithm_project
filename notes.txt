@@ -1,0 +1,16 @@
+pip install pandas numpy kurulu
+scikit-learn matplotlib seaborn textblob gensim bunların bilgileri ss de var ekran alıntılarında
+
+data-inconsistency-detection/
+│
+├── data/                    # Verilerin saklanacağı klasör
+│   └── responses.csv        # Google Form CSV verisi
+│
+├── src/                     # Python kodları
+│   ├── __init__.py
+│   ├── data_processing.py   # CSV okuma ve veri işleme
+│   ├── rule_checking.py     # Kural kontrol fonksiyonları
+│   └── similarity_analysis.py  # Metin benzerliği ve duygu analizi
+│
+├── requirements.txt         # Gerekli kütüphaneler
+└── README.md                # Proje hakkında açıklama
