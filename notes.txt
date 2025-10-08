@@ -14,3 +14,5 @@ data-inconsistency-detection/
 │
 ├── requirements.txt         # Gerekli kütüphaneler
 └── README.md                # Proje hakkında açıklama
+
+fuzzywuzzy kelime benzerliği için
