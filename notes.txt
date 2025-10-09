@@ -16,3 +16,5 @@ data-inconsistency-detection/
 └── README.md                # Proje hakkında açıklama
 
 fuzzywuzzy kelime benzerliği için
+
+synonym map i yakın cümle olmayanlar için kullanalım. 
