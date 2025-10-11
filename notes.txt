@@ -18,3 +18,8 @@ data-inconsistency-detection/
 fuzzywuzzy kelime benzerliği için
 
 synonym map i yakın cümle olmayanlar için kullanalım. 
+sentiment analiz ile cevapları evet/hayır olarak etiketledik.
+
+rapidfuzz u deneyelim 251 anket ile. fuzzywuzzy 25 saniye sürdü
+fuzzy ile rapidin verdiği skorları da karşılaştır. rapidin scoreları görmüş olalım böylece.
+

@@ -2,11 +2,20 @@ from fuzzywuzzy import fuzz
 from fuzzywuzzy import process
 import pandas as pd
 from synonym_map import synonym_map
+from check_inconsistencies import check_inconsistencies
+from check_inconsistencies import except_sentiment_analyzer
+from transformers import AutoModelForSequenceClassification, AutoTokenizer, pipeline
+
+# Türkçe sentiment analiz modeli (savasy)
+model = AutoModelForSequenceClassification.from_pretrained("savasy/bert-base-turkish-sentiment-cased")
+tokenizer = AutoTokenizer.from_pretrained("savasy/bert-base-turkish-sentiment-cased")
+sentiment_analyzer = pipeline("sentiment-analysis", tokenizer=tokenizer, model=model)
 
 
 
 def find_best_match(query, synonym_map):
     best_match = None
+    real_match = None
     best_score = 0
     print(f"Finding best match for: {query}")
 
@@ -24,6 +33,7 @@ def find_best_match(query, synonym_map):
         if score > best_score:
             best_score = score
             best_match = key
+            real_match = key
         
         # Eğer score düşükse, synonym'lerle karşılaştır
         if best_score < 70:
@@ -34,14 +44,33 @@ def find_best_match(query, synonym_map):
                 print(f"Comparing with synonym: {synonym} | Score: {score}")
                 if score > best_score:
                     best_score = score
-                    best_match = synonym  # Burada synonym kaydedeceğiz
+                    real_match = synonym
+                    best_match = key  # Burada synonym kaydedeceğiz
 
-    if best_score < 70:
+    if best_score < 50:
         print("Eşleşme Bulunamadı")
         return None
     
-    print(f"En iyi eşleşme '{query}': {best_match} şu skorla: {best_score}")
+    print(f"En iyi eşleşme '{query}': {real_match} şu skorla: {best_score}")
     return best_match
+
+# cevaplar etiketleniyor: evet/hayır
+def normalize_answer_sentiment(answer):
+    print("bert-base-turk çalıştı")
+    text = str(answer).strip().lower()
+    try:
+        result = sentiment_analyzer(text)[0]["label"]
+        print("returnden önce")
+        if result == "positive":
+            return "evet"
+        elif result == "negative":
+            return "hayır"
+        else:
+            return text  # unknown label
+    except Exception as e:
+        print(f"Sentiment analizi hatası: {e}")
+        return text  # hata varsa orijinalini döndür
+
 
 
 def generate_new_data(data, synonym_map):
@@ -54,46 +83,20 @@ def generate_new_data(data, synonym_map):
             matched_column = find_best_match(col, synonym_map)
             if matched_column:
                 print(f"Eşleşme Bulundu '{col}': {matched_column}")
-                print("\n\n")
-                new_row[matched_column] = row[col]  # Eşleşen sütunu yeni satıra ekliyoruz
+                value = row[col]  #cevap
+                if matched_column.lower() not in except_sentiment_analyzer:
+                    value = normalize_answer_sentiment(value)
+                new_row[matched_column] = value  # Eşleşen sütunu yeni satıra ekliyoruz
+            print("\n\n")
         new_data.append(new_row)
 
     # Yeni veriyi DataFrame'e dönüştürüp CSV olarak kaydedebiliriz
     new_df = pd.DataFrame(new_data)
     new_df.to_csv('data/new_data.csv', index=False)
     print("Yeni CSV dosyası 'data/new_data.csv' olarak kaydedildi.")
+    print(sentiment_analyzer("Kesinlikle yaptım"))    # ?
+    print(sentiment_analyzer("Yapmadım asla")) 
     return new_df
-
-def check_inconsistencies(row):
-    issues = []
-    
-    # Yaş < 18 ve Çalışıyor = Evet
-    if "yaş" in row and "çalışıyor musunuz?" in row:  # Sütunlar varsa kontrol et
-        if int(row["yaş"]) < 18 and row["çalışıyor musunuz?"] == "evet":
-            issues.append("18 yaş altı çalışıyor")
-    
-    # Kadın ve Askerlik yaptı = Evet
-    if "cinsiyet" in row and "askerlik yaptı mı?" in row:  # Sütunlar varsa kontrol et
-        print("girdi")
-        if row["cinsiyet"] == "kadın" and row["askerlik yaptı mı?"] == "evet":
-            issues.append("Kadın askerlik yaptı")
-    
-    # Eğitim seviyesi = Üniversite, yaş < 15 (eğitim seviyesi verisi yoksa bu kural atlanır)
-    if "eğitim seviyesi" in row and "yaş" in row:  # Eğitim seviyesi sütunu varsa
-        if row["eğitim seviyesi"] == "üniversite" and int(row["yaş"]) < 15:
-            issues.append("Üniversite öğrencisi ama yaş 15'ten küçük")
-    
-    # Evli = Hayır, Çocuk var = Evet
-    if "evli" in row and "çocuk Var" in row:
-        if row["evli"] == "hayır" and row["çocuk var"] == "evet":
-            issues.append("Evli değil ama çocuk var")
-    
-    # Gelir = 0, Harcamalar = 5000 TL
-    if "gelir" in row and "harcamalar" in row:  # Harcamalar sütunu varsa
-        if int(row["gelir"]) == 0 and int(row["harcamalar"]) > 3000:
-            issues.append("Gelir 0, harcama 3000 TL'den fazla")
-    
-    return issues
 
 
 def check_all_inconsistencies(data):
