@@ -1,2 +1,5 @@
-evli,yaş,cinsiyet,çalışıyor musunuz?,askerlik yaptı mı?,gelir,harcamalar
-hayır,16,kadın,evet,evet,15,30
+evli,yaş,cinsiyet,çalışıyor musunuz?,askerlik yaptı mı?,gelir,harcamalar,çocuk var,eğitim seviyesi
+evet,16,kadın,evet,evet,15,30,evet,
+evet,71,erkek,evet,evet,31,30,evet,
+evet,22,kadın,evet,evet,0,30,evet,
+hayır,14,kadın,hayır,hayır,45,30,hayır,üniversite

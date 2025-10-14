@@ -2,6 +2,7 @@ from fuzzywuzzy import fuzz
 from fuzzywuzzy import process
 import pandas as pd
 from synonym_map import synonym_map
+from deneme import temalar
 from check_inconsistencies import check_inconsistencies
 from check_inconsistencies import except_sentiment_analyzer
 from transformers import AutoModelForSequenceClassification, AutoTokenizer, pipeline
@@ -52,6 +53,7 @@ def find_best_match(query, synonym_map):
         return None
     
     print(f"En iyi eşleşme '{query}': {real_match} şu skorla: {best_score}")
+    print("\n\n\n")
     return best_match
 
 # cevaplar etiketleniyor: evet/hayır
@@ -59,6 +61,9 @@ def normalize_answer_sentiment(answer):
     print("bert-base-turk çalıştı")
     text = str(answer).strip().lower()
     try:
+        #geçici
+        if answer == "evliyim":
+            return "evet"
         result = sentiment_analyzer(text)[0]["label"]
         print("returnden önce")
         if result == "positive":
@@ -76,26 +81,36 @@ def normalize_answer_sentiment(answer):
 def generate_new_data(data, synonym_map):
     print("Starting to generate new data...")
     new_data = []
+    matched_columns = {}  # Eşleşen başlıkları önbelleğe almak için bir sözlük oluşturuyoruz
+
+    # Tüm başlıklar için eşleşmeleri önceden bul
+    for col in data.columns:
+        matched_column = find_best_match(col, synonym_map)
+        if matched_column:
+            matched_columns[col] = matched_column  # Başlık eşleşmesini saklıyoruz
+        else:
+            matched_columns[col] = col  # Eşleşme bulunmazsa, orijinal başlık kullanılır
+
+    # Eşleşmeleri bulduktan sonra, her satırda bu eşleşmeleri kullanarak işlem yapalım
     for _, row in data.iterrows():
         new_row = {}
         for col in row.keys():
-            print(f"Başlık kontrol ediliyor: {col}")
-            matched_column = find_best_match(col, synonym_map)
-            if matched_column:
-                print(f"Eşleşme Bulundu '{col}': {matched_column}")
-                value = row[col]  #cevap
-                if matched_column.lower() not in except_sentiment_analyzer:
-                    value = normalize_answer_sentiment(value)
-                new_row[matched_column] = value  # Eşleşen sütunu yeni satıra ekliyoruz
-            print("\n\n")
+            matched_column = matched_columns.get(col, col)  # Eğer eşleşme bulduysak, onu kullanıyoruz
+            value = row[col]  # cevabı al
+            if matched_column.lower() not in except_sentiment_analyzer:
+                value = normalize_answer_sentiment(value)  # Sentiment analizi yap
+            new_row[matched_column] = value  # Eşleşen sütunu yeni satıra ekliyoruz
         new_data.append(new_row)
 
     # Yeni veriyi DataFrame'e dönüştürüp CSV olarak kaydedebiliriz
     new_df = pd.DataFrame(new_data)
     new_df.to_csv('data/new_data.csv', index=False)
     print("Yeni CSV dosyası 'data/new_data.csv' olarak kaydedildi.")
-    print(sentiment_analyzer("Kesinlikle yaptım"))    # ?
-    print(sentiment_analyzer("Yapmadım asla")) 
+
+    # Test etmek için bazı cümleler
+    print(sentiment_analyzer("Kesinlikle yaptım"))
+    print(sentiment_analyzer("Yapmadım asla"))
+    print(sentiment_analyzer("çalışıyorum"))
     return new_df
 
 

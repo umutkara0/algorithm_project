@@ -1,2 +1,5 @@
-"Evli misiniz? ","yaş ","Cinsiyet ","Çalışıyor musunuz?","  Askerlik yaptı mı?  ","  Geliriniz nedir?  ","  Aylık harcamalarınız nedir?  "
-"evli değilim","16","kadın","evet","yaptım","15","30"
+"Evli misiniz? ","yaş ","Cinsiyet ","Çalışıyor musunuz?","  Askerlik yaptı mı?  ","  Geliriniz nedir?  ","  Aylık harcamalarınız nedir?  ","çocuğunuz var mı?", "eğitim seviyeniz"
+"evliyim","16","kadın","evet","yaptım","15","30","var",""
+"evliyim","71","erkek","evet","yaptım","31","30","var",""
+"evliyim","22","kadın","evet","yaptım","0","30","var",""
+"evli değilim","14","kadın","çalışmıyorum","yapmadım","45","30","yok","üniversite"
